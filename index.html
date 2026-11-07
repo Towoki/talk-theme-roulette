@@ -3,16 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>トークテーマルーレット</title>
+    <title>無限雑談ルーレット</title>
+
+    <!-- ブラウザやOSによる強制ダークモード反転を無効化 -->
+    <meta name="color-scheme" content="light">
 
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icon-500.png">
     <link rel="apple-touch-icon" href="icon-500.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="theme-color" content="#fff5eb">
 
     <style>
+        :root {
+            color-scheme: light; /* 強制ダークモードによる勝手な減光・反転を防止 */
+        }
         body {
             font-family: sans-serif;
             background: linear-gradient(135deg, #fff5eb 0%, #ffe4e6 100%);
@@ -87,8 +93,8 @@
             background-color: #ff6b6b;
             color: #ffffff;
             border: none;
-            padding: 12px 36px; /* ここを調整してボタンを少し小さくしました */
-            font-size: 1.1rem;   /* 文字サイズもスッキリ調整 */
+            padding: 12px 36px;
+            font-size: 1.1rem;
             font-weight: bold;
             border-radius: 30px;
             cursor: pointer;
@@ -132,7 +138,7 @@
 </head>
 <body>
 
-    <h1>トークテーマルーレット</h1>
+    <h1>無限雑談ルーレット</h1>
     <div class="theme-counter" id="themeCounter">データ取得中…</div>
 
     <div class="card" id="cardContainer">
