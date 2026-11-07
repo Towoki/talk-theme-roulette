@@ -1,6 +1,6 @@
 {
-  "name": "トークテーマルーレット",
-  "short_name": "トークテーマルーレット",
+  "name": "無限雑談ルーレット",
+  "short_name": "無限雑談ルーレット",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1e1e2f",
