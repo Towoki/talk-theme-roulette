@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>トークテーマルーレット</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon-500.png">
+    <link rel="apple-touch-icon" href="icon-500.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#fff5eb">
+
+    <style>
+        body {
+            font-family: sans-serif;
+            background: linear-gradient(135deg, #fff5eb 0%, #ffe4e6 100%);
+            color: #4a3e3d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            color: #ff6b6b;
+        }
+        .theme-counter {
+            font-size: 0.85rem;
+            color: #8c7a78;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 2px solid #ffd1d1;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 450px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.15);
+            box-sizing: border-box;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .theme-item {
+            padding: 12px 16px;
+            margin: 10px 0;
+            background-color: #fff0f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #4a3e3d;
+        }
+        .theme-item:hover {
+            background-color: #ffe4e4;
+            border-color: #ffb3b3;
+        }
+        .theme-item.highlight {
+            background-color: #fff3c4;
+            border-color: #ffc107;
+            color: #8a5300;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.35);
+        }
+        .number {
+            display: inline-block;
+            width: 24px;
+            text-align: center;
+            margin-right: 8px;
+            opacity: 0.8;
+        }
+        .btn-container {
+            margin-top: 24px;
+            text-align: center;
+        }
+        button {
+            background-color: #ff6b6b;
+            color: #ffffff;
+            border: none;
+            padding: 12px 36px; /* ここを調整してボタンを少し小さくしました */
+            font-size: 1.1rem;   /* 文字サイズもスッキリ調整 */
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+            transition: transform 0.1s, background-color 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            background-color: #ff5252;
+            box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+        }
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        button.stop-mode {
+            background-color: #4ecdc4;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.35);
+        }
+        button.stop-mode:hover {
+            background-color: #3bcfc4;
+        }
+        .hint {
+            margin-top: 16px;
+            font-size: 0.85rem;
+            color: #8c7a78;
+            text-align: center;
+            padding: 0 20px;
+            line-height: 1.4;
+        }
+        .loading {
+            text-align: center;
+            color: #8c7a78;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>トークテーマルーレット</h1>
+    <div class="theme-counter" id="themeCounter">データ取得中…</div>
+
+    <div class="card" id="cardContainer">
+        <div class="loading" id="loadingText">データ取得中…</div>
+    </div>
+
+    <div class="btn-container">
+        <button id="rouletteButton" onclick="toggleRoulette()" disabled>スタート</button>
+    </div>
+
+    <div class="hint">
+        ※金色に光るお題についてお話しください。<br>他のお題をタップして切り替えることもできます。
+    </div>
+
+    <script>
+        const apiUrl = "https://script.google.com/macros/s/AKfycbxZiZrjICAD1GZnmATDC1j-t_URBEZ_24sRBZJ8vUHZm3BlvI1hWN5T3paUXPJVA30Nvg/exec";
+
+        let categoryData = {};
+        let currentSelectedThemes = [];
+        let currentHighlightIndex = 0;
+
+        let isRolling = false;
+        let rollInterval = null;
+
+        async function fetchThemes() {
+            try {
+                const response = await fetch(apiUrl);
+                categoryData = await response.json();
+                
+                const categories = Object.keys(categoryData);
+                if (categories.length < 4) {
+                    document.getElementById("loadingText").innerText = "有効なカテゴリが4つ以上見つかりません。";
+                    return;
+                }
+
+                let totalThemes = 0;
+                Object.values(categoryData).forEach(words => {
+                    totalThemes += words.length;
+                });
+                document.getElementById("themeCounter").innerText = `収録ワード数: ${totalThemes}件`;
+
+                document.getElementById("rouletteButton").disabled = false;
+                executeDrawLogic();
+                renderCard();
+
+            } catch (error) {
+                console.error("データの取得に失敗しました:", error);
+                document.getElementById("loadingText").innerText = "データの読み込みに失敗しました。";
+            }
+        }
+
+        function toggleRoulette() {
+            const categories = Object.keys(categoryData);
+            if (categories.length < 4) return;
+
+            const btn = document.getElementById("rouletteButton");
+
+            if (!isRolling) {
+                isRolling = true;
+                btn.textContent = "ストップ！";
+                btn.classList.add("stop-mode");
+
+                rollInterval = setInterval(() => {
+                    executeDrawLogic();
+                    renderCard();
+                }, 50);
+
+            } else {
+                isRolling = false;
+                clearInterval(rollInterval);
+
+                executeDrawLogic();
+                renderCard();
+
+                btn.textContent = "スタート";
+                btn.classList.remove("stop-mode");
+            }
+        }
+
+        function executeDrawLogic() {
+            const categories = Object.keys(categoryData);
+            
+            const shuffledCategories = [...categories].sort(() => 0.5 - Math.random());
+            const selectedCategories = shuffledCategories.slice(0, 4);
+
+            currentSelectedThemes = selectedCategories.map(cat => {
+                const words = categoryData[cat];
+                return words[Math.floor(Math.random() * words.length)];
+            });
+
+            currentHighlightIndex = Math.floor(Math.random() * 4);
+        }
+
+        function renderCard() {
+            const container = document.getElementById("cardContainer");
+            container.innerHTML = "";
+
+            currentSelectedThemes.forEach((theme, index) => {
+                const item = document.createElement("div");
+                item.className = "theme-item";
+                
+                if (index === currentHighlightIndex) {
+                    item.classList.add("highlight");
+                }
+                
+                item.innerHTML = `<span class="number">[${index + 1}]</span>${theme}`;
+
+                item.onclick = () => {
+                    if (isRolling) return;
+                    currentHighlightIndex = index;
+                    renderCard();
+                };
+                
+                container.appendChild(item);
+            });
+        }
+
+        fetchThemes();
+    </script>
+
+</body>
+</html>
